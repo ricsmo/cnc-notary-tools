@@ -1,0 +1,17 @@
+{
+  "name": "cnc-notary-tools",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "dev:node": "node server.mjs",
+    "deploy:pages": "wrangler pages deploy public",
+    "deploy:cron": "cd worker-cron && npx wrangler deploy",
+    "db:schema": "wrangler d1 execute cnc-notary --local --file=schema.sql",
+    "db:import": "node scripts/dump-for-d1.mjs > /tmp/d1-dump.sql && wrangler d1 execute cnc-notary --local --file=/tmp/d1-dump.sql",
+    "db:reset": "wrangler d1 execute cnc-notary --local --command='DELETE FROM notaries; DELETE FROM exam_dates; DELETE FROM zip_codes; DELETE FROM meta;'"
+  },
+  "devDependencies": {
+    "wrangler": "^4.103.0"
+  }
+}

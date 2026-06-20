@@ -1,0 +1,89 @@
+:root {
+  --bg: #f7f8fa;
+  --card-bg: #ffffff;
+  --border: #e0e4ec;
+  --text: #1a1a2e;
+  --text-muted: #667085;
+  --green: #067847;
+  --blue: #1a4ed8;
+  --orange: #c4320a;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.container { max-width: 720px; margin: 0 auto; padding: 20px; }
+
+h1 { font-size: 24px; margin-bottom: 8px; }
+h2 { font-size: 20px; margin: 24px 0 12px; }
+h3 { font-size: 16px; margin-bottom: 8px; }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+input, select, button {
+  font-family: inherit;
+  font-size: 15px;
+  padding: 10px 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+}
+
+input { width: 100%; max-width: 400px; }
+button {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:hover { background: #0d47a1; }
+
+.result-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.result-row:last-child { border-bottom: none; }
+
+.name { font-weight: 600; font-size: 15px; }
+.meta { font-size: 13px; color: var(--text-muted); }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-green { background: #ecfdf3; color: var(--green); }
+.badge-orange { background: #fff4e5; color: var(--orange); }
+.badge-red { background: #fef3f2; color: #b42318; }
+
+.status-active { background: #ecfdf3; color: var(--green); }
+.status-warning { background: #fff4e5; color: var(--orange); }
+.status-expired { background: #fef3f2; color: #b42318; }
+
+.recommendation {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.rec-renew { background: #fff4e5; color: var(--orange); }
+.rec-expired { background: #fef3f2; color: #b42318; }
+.rec-ok { background: #ecfdf3; color: var(--green); }
+
+.muted { color: var(--text-muted); font-size: 13px; }
+.disclaimer { font-size: 12px; color: #98a2b3; margin-top: 16px; }

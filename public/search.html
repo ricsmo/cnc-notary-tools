@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify a California Notary Commission</title>
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="container">
+
+<h1>Verify a California Notary Commission</h1>
+<p class="muted">Search 136,000+ active notaries commissioned in California. Verify someone's commission status and expiration date.</p>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin:20px 0;">
+  <input type="text" id="search-input" placeholder="Enter notary name (e.g. Smith, John)..." style="flex:1;min-width:200px;" autocomplete="off">
+  <select id="county-filter" style="max-width:200px;">
+    <option value="">All counties</option>
+  </select>
+</div>
+
+<div id="results"></div>
+
+<div class="disclaimer">
+  Data sourced from California Secretary of State active notary database, updated nightly.
+  This tool verifies commission status only — contact information is not included.
+  For official verification, visit <a href="https://www.sos.ca.gov">sos.ca.gov</a>.
+</div>
+
+</div>
+
+<script>
+async function loadCounties() {
+  const r = await fetch('/api/stats');
+  const data = await r.json();
+  const select = document.getElementById('county-filter');
+  data.counties.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.code;
+    opt.textContent = c.name;
+    select.appendChild(opt);
+  });
+}
+
+async function search(q, county) {
+  let url = `/api/search?q=${encodeURIComponent(q)}`;
+  if (county) url += `&county=${county}`;
+  const r = await fetch(url);
+  return r.json();
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${m}/${d}/${y}`;
+}
+
+function getExpirationStatus(expiration) {
+  const now = new Date();
+  const exp = new Date(expiration);
+  const daysUntil = Math.round((exp - now) / (1000 * 60 * 60 * 24));
+
+  if (daysUntil < 0) return { label: 'Expired', class: 'status-expired' };
+  if (daysUntil <= 30) return { label: `Expires in ${daysUntil} days`, class: 'status-warning' };
+  return { label: `Expires ${formatDate(expiration)}`, class: 'status-active' };
+}
+
+function renderResults(data) {
+  const el = document.getElementById('results');
+
+  if (!data.results || data.results.length === 0) {
+    el.innerHTML = `<p class="muted">No notaries found. Try a different name or check the spelling.</p>`;
+    return;
+  }
+
+  el.innerHTML = `<p class="muted">${data.count} result${data.count !== 1 ? 's' : ''}</p>` +
+    data.results.map(n => {
+      const status = getExpirationStatus(n.expiration);
+      // Hide city if it looks like a street address (SOS data quality issue)
+      const city = n.city && !/\d/.test(n.city) ? n.city : '';
+      return `
+      <div class="result-row">
+        <div class="name">${n.name} <span class="badge ${status.class}">${status.label}</span></div>
+        <div class="meta">
+          <span>${city ? city + ', ' : ''}${n.county_name} County</span>
+          <span style="margin-left:16px;">Commission #: <strong>${n.commission_nbr}</strong></span>
+        </div>
+      </div>
+      `;
+    }).join('');
+}
+
+let timer;
+function debounce(fn, delay) {
+  clearTimeout(timer);
+  timer = setTimeout(fn, delay);
+}
+
+document.getElementById('search-input').addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length < 2) {
+    document.getElementById('results').innerHTML = '';
+    return;
+  }
+  debounce(async () => {
+    try {
+      const county = document.getElementById('county-filter').value;
+      const data = await search(q, county);
+      renderResults(data);
+    } catch (e) {
+      document.getElementById('results').innerHTML = '<p class="muted">Search error. Is the server running?</p>';
+    }
+  }, 300);
+});
+
+document.getElementById('county-filter').addEventListener('change', function() {
+  const q = document.getElementById('search-input').value.trim();
+  if (q.length >= 2) {
+    search(q, this.value).then(renderResults);
+  }
+});
+
+loadCounties();
+</script>
+</body>
+</html>

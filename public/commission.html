@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check Your California Notary Commission Status</title>
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="container">
+
+<h1>Commission Status Checker</h1>
+<p class="muted">Enter your commission number to check expiration status, renewal requirements, and upcoming exam dates near you.</p>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin:20px 0;">
+  <input type="text" id="commission-input" placeholder="Commission number (e.g. 2443717)..." style="flex:2;min-width:200px;" autocomplete="off">
+  <input type="text" id="zip-input" placeholder="Your zip (optional)" style="flex:1;max-width:140px;" autocomplete="off">
+  <button onclick="checkCommission()">Check Status</button>
+</div>
+<p class="muted" style="font-size:12px;margin:-8px 0 16px;">Enter your zip to find the closest exams by distance instead of county.</p>
+
+<div id="result"></div>
+
+<div class="disclaimer">
+  Data sourced from California Secretary of State active notary database, updated nightly.
+  Exam data from CPS HR Consulting. For official verification, visit <a href="https://www.sos.ca.gov">sos.ca.gov</a>.
+</div>
+
+</div>
+
+<script>
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+const riskColors = {
+  critical: { bg: '#fef3f2', border: '#b42318', text: '#b42318' },
+  high:     { bg: '#fff4e5', border: '#c4320a', text: '#c4320a' },
+  medium:   { bg: '#fffaeb', border: '#dc8800', text: '#dc8800' },
+  low:      { bg: '#f7f8fa', border: '#667085', text: '#667085' },
+  none:     { bg: '#ecfdf3', border: '#067847', text: '#067847' }
+};
+
+async function checkCommission() {
+  const number = document.getElementById('commission-input').value.trim();
+  const zip = document.getElementById('zip-input').value.trim();
+  const el = document.getElementById('result');
+
+  if (!number) {
+    el.innerHTML = '<p class="muted">Enter a commission number.</p>';
+    return;
+  }
+
+  el.innerHTML = '<p class="muted">Checking...</p>';
+
+  try {
+    let url = `/api/commission?number=${encodeURIComponent(number)}`;
+    if (zip) url += `&zip=${encodeURIComponent(zip)}`;
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (!data.found) {
+      el.innerHTML = `
+        <div class="card" style="border-color:#b42318;">
+          <div class="name">Commission #${number} not found</div>
+          <div class="meta">This number is not in the active notary database. The commission may have expired or been voided. Verify at <a href="https://www.sos.ca.gov">sos.ca.gov</a>.</div>
+        </div>`;
+      return;
+    }
+
+    const rec = data.recommendation;
+    const rc = riskColors[rec.urgency] || riskColors.low;
+
+    // ─── Build paths HTML ────────────────────────────
+    let pathsHtml = '';
+    if (rec.paths && (rec.paths.recommended || rec.paths.alternative)) {
+      const rec_path = rec.paths.recommended;
+      const alt_path = rec.paths.alternative;
+
+      // Recommended path
+      if (rec_path) {
+        pathsHtml += `
+          <div style="margin-top:12px;padding:12px;background:#ecfdf3;border-radius:6px;border:1px solid #067847;">
+            <div style="font-weight:700;font-size:14px;color:#067847;">
+              ★ Recommended: ${rec_path.label}
+            </div>
+            <p style="font-size:13px;margin-top:4px;color:#1a1a2e;">${rec_path.text}</p>
+            ${rec_path.exam ? `<div class="meta" style="margin-top:4px;">Next exam: ${formatDate(rec_path.exam.date)} — ${rec_path.exam.venue}, ${rec_path.exam.city}${rec_path.exam.distance_miles ? ' (' + Math.round(rec_path.exam.distance_miles) + ' mi)' : ''}</div>` : ''}
+          </div>`;
+      }
+
+      // Alternative path
+      if (alt_path) {
+        pathsHtml += `
+          <div style="margin-top:8px;padding:12px;background:#f7f8fa;border-radius:6px;border:1px solid #e0e4ec;">
+            <div style="font-weight:700;font-size:14px;color:#667085;">
+              Also Available: ${alt_path.label}
+            </div>
+            <p style="font-size:13px;margin-top:4px;color:#1a1a2e;">${alt_path.text}</p>
+          </div>`;
+      }
+    }
+
+    // ─── Build exam list HTML ────────────────────────
+    let examHtml = '';
+    if (data.upcoming_exams && data.upcoming_exams.length > 0) {
+      const searchLabel = data.exam_search.method === 'geo'
+        ? `Closest to zip ${data.exam_search.zip}`
+        : data.exam_search.method === 'statewide_fallback'
+          ? 'Nearest to Your County'
+          : 'In Your County';
+      examHtml = `
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-weight:600;font-size:14px;margin-bottom:8px;">Upcoming Exams — ${searchLabel}</div>
+          ${data.upcoming_exams.map(e => `
+            <div class="result-row" style="padding:8px 0;">
+              <div class="name" style="font-size:14px;">${formatDate(e.date)}</div>
+              <div class="meta">
+                ${e.venue} — ${e.city}${e.distance_miles ? ' (' + Math.round(e.distance_miles) + ' mi)' : ''}
+                ${data.exam_search.method !== 'geo' && e.county_name !== data.county ? ', ' + e.county_name + ' County' : ''}
+              </div>
+              <div class="meta">Times: ${e.times}</div>
+              ${e.registration_url ? `<a href="${e.registration_url}" target="_blank" rel="noopener" style="font-size:13px;">Register on CPS HR →</a>` : ''}
+            </div>
+          `).join('')}
+        </div>`;
+    } else if (rec.urgency !== 'none' && rec.urgency !== 'low') {
+      examHtml = `
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+          <p class="muted" style="font-size:13px;">No exams currently scheduled before your expiration date (${formatDate(data.expiration)}). Check <a href="https://cmas.cpshr.us/CMAS/" target="_blank" rel="noopener">CPS HR</a> for newly added sessions.</p>
+        </div>`;
+    }
+
+    el.innerHTML = `
+      <div class="card" style="border-left:4px solid ${rc.border};">
+        <div class="name">${data.name}</div>
+        <div class="meta" style="margin-bottom:4px;">
+          Commission #${data.commission_nbr} · ${data.county} County
+        </div>
+        <div class="meta" style="margin-bottom:12px;">
+          Expires: <strong>${data.expiration_formatted}</strong> (${data.status === 'expired' ? 'Expired' : data.months_until_expiration + ' months left'})
+        </div>
+
+        <div style="padding:10px 12px;background:${rc.bg};border-radius:6px;margin-bottom:8px;">
+          <span class="badge" style="background:${rc.text};color:white;">${rec.label}</span>
+          <span style="font-size:13px;margin-left:8px;">${rec.course || ''}</span>
+        </div>
+
+        <p style="font-size:14px;">${rec.text}</p>
+
+        ${rec.cta ? `<a href="${rec.cta.url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;background:var(--blue);color:#fff;padding:10px 20px;border-radius:6px;font-weight:600;font-size:14px;text-decoration:none;">${rec.cta.text} →</a>` : ''}
+
+        ${pathsHtml}
+        ${examHtml}
+      </div>
+    `;
+
+  } catch (e) {
+    el.innerHTML = '<p class="muted">Error checking commission. Is the server running?</p>';
+  }
+}
+
+document.getElementById('commission-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkCommission();
+});
+document.getElementById('zip-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkCommission();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/active-notary.txt
+data/active-notary.zip
+*.log

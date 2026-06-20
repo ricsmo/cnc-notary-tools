@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>California Notary Exam Schedule — Dates & Locations Near You</title>
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+.exam-session { background:#fff; border:1px solid var(--border); border-radius:8px; padding:14px; }
+.exam-session .name { font-weight:600; font-size:15px; margin-bottom:4px; }
+.exam-session .meta { font-size:13px; color:var(--text-muted); margin-top:2px; }
+.distance-badge { display:inline-block; background:#e8f0fe; color:#1a4ed8; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600; margin-left:8px; }
+
+/* Calendar grid */
+.cal-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.cal-nav button { background:none; border:1px solid var(--border); border-radius:6px; padding:6px 14px; font-size:14px; color:var(--text); cursor:pointer; }
+.cal-nav button:hover { background:var(--bg); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-dow { text-align:center; font-size:12px; font-weight:600; color:var(--text-muted); padding:4px; }
+.cal-day { min-height:70px; background:#fff; border:1px solid var(--border); border-radius:4px; padding:4px; font-size:12px; position:relative; }
+.cal-day.empty { background:var(--bg); }
+.cal-day.today { border-color:var(--blue); border-width:2px; }
+.cal-day .day-num { font-weight:600; }
+.cal-event { display:block; background:#e8f0fe; color:#1a4ed8; padding:1px 4px; border-radius:3px; font-size:10px; margin-top:2px; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.cal-event.near { background:#ecfdf3; color:var(--green); }
+</style>
+</head>
+<body>
+<div class="container" style="max-width:900px;">
+
+<h1>California Notary Exam Schedule</h1>
+<p class="muted">Official exam dates and locations from CPS HR Consulting. Find exams near you, then register through CPS HR.</p>
+
+<!-- Geo search bar -->
+<div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+  <input type="text" id="zip-input" placeholder="Enter your zip code..." style="max-width:160px;" inputmode="numeric" maxlength="5">
+  <button id="search-btn">Find Exams Near Me</button>
+  <button id="location-btn" style="background:var(--text-muted);">Use My Location</button>
+  <button id="clear-btn" style="background:none;color:var(--blue);border:1px solid var(--blue);">Show All</button>
+  <span id="location-status" class="muted" style="font-size:13px;"></span>
+</div>
+
+<!-- View toggle -->
+<div style="display:flex;gap:8px;margin:16px 0;">
+  <button id="view-list" style="background:var(--blue);">📋 List View</button>
+  <button id="view-cal" style="background:none;color:var(--text);border:1px solid var(--border);">📅 Calendar View</button>
+</div>
+
+<!-- List view -->
+<div id="list-view">
+  <div id="schedule"></div>
+</div>
+
+<!-- Calendar view -->
+<div id="cal-view" style="display:none;">
+  <div class="cal-nav">
+    <button id="cal-prev">← Previous</button>
+    <strong id="cal-month-label"></strong>
+    <button id="cal-next">Next →</button>
+  </div>
+  <div class="cal-grid" id="cal-dow-row">
+    <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+  </div>
+  <div class="cal-grid" id="cal-grid" style="margin-top:2px;"></div>
+</div>
+
+<div class="disclaimer">
+  Exam schedule provided by CPS HR Consulting. Registration required through
+  <a href="https://cmas.cpshr.us/CMAS/Login.aspx?ReturnUrl=%2fCMAS%2fCandidate%2fListProgramEvent.aspx%3fprogramid%3d165&programid=165">cmas.cpshr.us</a>.
+  Walk-in registration allowed on a space-available basis — arrive 45 minutes early.
+</div>
+
+</div>
+
+<script>
+let currentExams = [];
+let userLocation = null;
+let calMonth = new Date();
+calMonth.setDate(1);
+
+// ─── Load exams ──────────────────────────
+async function loadExams() {
+  let url = '/api/exams';
+  if (userLocation) {
+    if (userLocation.zip) url += `?zip=${userLocation.zip}`;
+    else url += `?lat=${userLocation.lat}&lng=${userLocation.lng}`;
+  }
+  const r = await fetch(url);
+  const data = await r.json();
+  currentExams = data.exams || [];
+  document.getElementById('location-status').textContent = userLocation
+    ? `Showing results near ${userLocation.zip || 'your location'}`
+    : '';
+  renderList();
+  renderCalendar();
+}
+
+// ─── Render list ─────────────────────────
+function renderList() {
+  const el = document.getElementById('schedule');
+  if (!currentExams.length) {
+    el.innerHTML = '<p class="muted">No upcoming exams found.</p>';
+    return;
+  }
+
+  // Group by venue when in distance mode
+  if (userLocation) {
+    const byVenue = {};
+    currentExams.forEach(e => {
+      if (!byVenue[e.venue]) byVenue[e.venue] = { venue: e.venue, address: e.address, city: e.city, county_name: e.county_name, distance: e.distance_miles, dates: [] };
+      byVenue[e.venue].dates.push(e);
+    });
+
+    const venues = Object.values(byVenue).sort((a,b) => (a.distance||9999) - (b.distance||9999));
+    el.innerHTML = venues.map(v => `
+      <div style="margin-bottom:20px;">
+        <h2 style="font-size:16px;color:var(--text);padding-bottom:4px;border-bottom:2px solid var(--border);">
+          ${v.venue}
+          ${v.distance != null ? `<span class="distance-badge">${v.distance} miles away</span>` : ''}
+        </h2>
+        <div style="display:grid;gap:8px;margin-top:8px;">
+          ${v.dates.map(d => renderSession(d, true)).join('')}
+        </div>
+      </div>
+    `).join('');
+    return;
+  }
+
+  // Group by date when no geo
+  const byDate = {};
+  currentExams.forEach(e => {
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+
+  el.innerHTML = Object.entries(byDate).map(([date, sessions]) => {
+    const d = new Date(date + 'T00:00:00');
+    const dateStr = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    return `
+      <div style="margin-bottom:24px;">
+        <h2 style="font-size:18px;color:#1a1a2e;padding-bottom:4px;border-bottom:2px solid #e0e4ec;">${dateStr}</h2>
+        <div style="display:grid;gap:12px;margin-top:12px;">
+          ${sessions.map(s => renderSession(s, false)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSession(s, compact) {
+  const distHtml = (userLocation && s.distance_miles != null) ? `<span class="distance-badge">${s.distance_miles} mi</span>` : '';
+  return `
+    <div class="exam-session">
+      <div class="name">${s.city}${compact ? '' : ' — ' + s.venue}</div>
+      ${compact ? `<div class="meta">${s.address}</div>` : `<div class="meta">${s.address ? s.address + ', ' : ''}${s.city}, CA</div>`}
+      ${compact ? `<div class="meta">${new Date(s.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${s.times}</div>` : `<div class="meta"><strong>Times:</strong> ${s.times}</div>`}
+      <div class="meta" style="margin-top:4px;">
+        <span class="badge badge-green">Open</span>
+        ${s.walk_in ? '<span class="badge badge-orange">Walk-in OK</span>' : ''}
+        <a href="${s.registration_url}" style="margin-left:8px;color:#1a4ed8;font-size:14px;">Register →</a>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Render calendar ────────────────────
+function renderCalendar() {
+  const year = calMonth.getFullYear();
+  const month = calMonth.getMonth();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${monthNames[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // Build exam lookup by date
+  const examByDate = {};
+  currentExams.forEach(e => {
+    const ed = new Date(e.date + 'T00:00:00');
+    if (ed.getFullYear() === year && ed.getMonth() === month) {
+      const day = ed.getDate();
+      if (!examByDate[day]) examByDate[day] = [];
+      examByDate[day].push(e);
+    }
+  });
+
+  let html = '';
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+  // Days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cellDate = new Date(year, month, d);
+    const isToday = cellDate.getTime() === today.getTime();
+    const exams = examByDate[d] || [];
+    const eventsHtml = exams.slice(0, 3).map(e => {
+      const nearClass = (userLocation && e.distance_miles != null && e.distance_miles < 50) ? ' near' : '';
+      return `<span class="cal-event${nearClass}" title="${e.venue}, ${e.city}">${e.city}</span>`;
+    }).join('');
+    const moreHtml = exams.length > 3 ? `<span class="cal-event" style="color:#667085;">+${exams.length - 3} more</span>` : '';
+    html += `<div class="cal-day${isToday ? ' today' : ''}"><div class="day-num">${d}</div>${eventsHtml}${moreHtml}</div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+// ─── Event handlers ──────────────────────
+document.getElementById('search-btn').addEventListener('click', function() {
+  const zip = document.getElementById('zip-input').value.trim();
+  if (zip.length === 5 && /^\d{5}$/.test(zip)) {
+    userLocation = { zip };
+    loadExams();
+  }
+});
+
+document.getElementById('zip-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') document.getElementById('search-btn').click();
+});
+
+document.getElementById('location-btn').addEventListener('click', function() {
+  if (!navigator.geolocation) {
+    document.getElementById('location-status').textContent = 'Geolocation not supported.';
+    return;
+  }
+  document.getElementById('location-status').textContent = 'Getting your location...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLocation = { lat: pos.coords.latitude.toFixed(4), lng: pos.coords.longitude.toFixed(4) };
+      loadExams();
+    },
+    err => {
+      document.getElementById('location-status').textContent = 'Location access denied. Try zip code instead.';
+    }
+  );
+});
+
+document.getElementById('clear-btn').addEventListener('click', function() {
+  userLocation = null;
+  document.getElementById('zip-input').value = '';
+  loadExams();
+});
+
+document.getElementById('view-list').addEventListener('click', function() {
+  document.getElementById('list-view').style.display = '';
+  document.getElementById('cal-view').style.display = 'none';
+  this.style.background = 'var(--blue)';
+  this.style.color = '#fff';
+  document.getElementById('view-cal').style.background = 'none';
+  document.getElementById('view-cal').style.color = 'var(--text)';
+  document.getElementById('view-cal').style.border = '1px solid var(--border)';
+});
+
+document.getElementById('view-cal').addEventListener('click', function() {
+  document.getElementById('list-view').style.display = 'none';
+  document.getElementById('cal-view').style.display = '';
+  this.style.background = 'var(--blue)';
+  this.style.color = '#fff';
+  document.getElementById('view-list').style.background = 'none';
+  document.getElementById('view-list').style.color = 'var(--text)';
+  document.getElementById('view-list').style.border = '1px solid var(--border)';
+});
+
+document.getElementById('cal-prev').addEventListener('click', function() {
+  calMonth.setMonth(calMonth.getMonth() - 1);
+  renderCalendar();
+});
+
+document.getElementById('cal-next').addEventListener('click', function() {
+  calMonth.setMonth(calMonth.getMonth() + 1);
+  renderCalendar();
+});
+
+loadExams();
+</script>
+</body>
+</html>

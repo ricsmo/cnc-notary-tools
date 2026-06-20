@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>County Notary Stats</title>
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="container">
+
+<h1>County Notary Statistics</h1>
+<p class="muted">Live data from the California Secretary of State active notary database.</p>
+
+<div style="margin: 20px 0;">
+  <select id="county-select">
+    <option value="">Select a county...</option>
+  </select>
+</div>
+
+<div id="stats-output"></div>
+
+<div class="disclaimer">
+  Data sourced from California Secretary of State active notary database, updated nightly.
+  For official verification, visit <a href="https://www.sos.ca.gov">sos.ca.gov</a>.
+</div>
+
+</div>
+
+<script>
+async function loadCounties() {
+  const r = await fetch('/api/stats');
+  const data = await r.json();
+  const select = document.getElementById('county-select');
+  data.counties.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.slug;
+    opt.textContent = `${c.name} County (${c.notary_count.toLocaleString()})`;
+    select.appendChild(opt);
+  });
+}
+
+async function loadStats(slug) {
+  const r = await fetch(`/api/stats/${slug}`);
+  const data = await r.json();
+
+  const citiesHtml = data.top_cities.map(c =>
+    `<tr><td style="padding:6px 0;">${c.city}</td><td style="text-align:right;padding:6px 0;font-weight:600;">${c.count.toLocaleString()}</td></tr>`
+  ).join('');
+
+  document.getElementById('stats-output').innerHTML = `
+    <div class="card">
+      <h3 style="color:var(--text-muted);font-size:14px;font-weight:400;margin:0;">Active Notaries</h3>
+      <p style="font-size:36px;font-weight:700;color:var(--green);margin:4px 0 16px;">${data.notary_count.toLocaleString()}</p>
+
+      <h3 style="font-size:14px;color:var(--text-muted);margin-bottom:8px;">Top Cities in ${data.county} County</h3>
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">
+        <tbody>${citiesHtml}</tbody>
+      </table>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+        <span class="badge badge-orange">${data.expiring_within_12_months.toLocaleString()}</span>
+        <span class="muted">expiring within 12 months — potential renewal course customers</span>
+      </div>
+    </div>
+  `;
+}
+
+loadCounties();
+
+document.getElementById('county-select').addEventListener('change', function() {
+  if (this.value) loadStats(this.value);
+  else document.getElementById('stats-output').innerHTML = '';
+});
+</script>
+</body>
+</html>
