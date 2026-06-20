@@ -3,54 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>California Notary Tools</title>
+<title>California Notary Tools | CalNotaryClass</title>
 <link rel="stylesheet" href="/assets/style.css">
+<meta name="robots" content="noindex">
 </head>
 <body>
-<div class="container">
+<div class="container" style="max-width:600px;">
 
-<h1>California Notary Tools</h1>
-<p class="muted">Free tools for California notaries. Data from CA SOS active notary database (136,000+ records, updated nightly) and CPS HR exam schedule.</p>
-
-<h2>Tools</h2>
-
-<div class="card">
-  <h3><a href="/search.html">🔍 Commission Verification</a></h3>
-  <p class="muted">Search by name to verify someone's notary commission status, number, and expiration date. No contact info included — verification only.</p>
-  <p class="muted"><strong>Audience:</strong> Employers, title companies, anyone verifying a notary's credentials</p>
-  <p class="muted"><strong>Embed:</strong> iframe on calnotaryclass.com/verify-commission/</p>
+<div style="text-align:center;padding:40px 0;">
+  <h1>California Notary Tools</h1>
+  <p class="muted">Interactive tools for California notaries and commission applicants.</p>
 </div>
 
-<div class="card">
-  <h3><a href="/commission.html">📋 Commission Checker</a></h3>
-  <p class="muted">Look up a commission number to check expiration status and get course recommendations (6-hour vs 3-hour refresher).</p>
-  <p class="muted"><strong>Audience:</strong> Existing notaries checking their renewal status</p>
-  <p class="muted"><strong>Embed:</strong> iframe on calnotaryclass.com/commission-checker/</p>
-</div>
-
-<div class="card">
-  <h3><a href="/county-widget.html">📊 County Stats</a></h3>
-  <p class="muted">Live notary counts per county with top cities and expiring commissions. Data for county landing pages.</p>
-  <p class="muted"><strong>Audience:</strong> SEO (indexable HTML fragment embeds on county pages)</p>
-</div>
-
-<div class="card">
-  <h3><a href="/exams.html">📝 Exam Schedule</a></h3>
-  <p class="muted">Upcoming California notary exam dates, locations, and registration links from CPS HR Consulting.</p>
-  <p class="muted"><strong>Audience:</strong> People preparing to take the state exam</p>
-  <p class="muted"><strong>Embed:</strong> HTML fragment on calnotaryclass.com/exam-schedule/</p>
-</div>
-
-<h2>API Endpoints</h2>
-
-<div class="card">
-  <pre style="font-size:13px;overflow-x:auto;line-height:1.8;">GET /api/search?q=smith&county=37&limit=20   → Verify commission by name
-GET /api/commission?number=2538491              → Check commission status + recommendations
-GET /api/stats                                  → All county stats (JSON)
-GET /api/stats/san-diego                        → Specific county stats (JSON)
-GET /api/exams                                  → Upcoming exam sessions
-GET /api/exams?county=37                        → Exams filtered by county
-GET /api/fragment/county/san-diego              → County stats as HTML (for WP embed)</pre>
+<div class="card" style="text-align:center;">
+  <p>These tools are available on <a href="https://calnotaryclass.com">CalNotaryClass.com</a>.</p>
+  <p class="muted">Visit our site to verify a notary commission, check your renewal status, and find upcoming exam dates.</p>
+  <div style="margin-top:16px;">
+    <a href="https://calnotaryclass.com" style="display:inline-block;background:var(--accent);color:var(--palette9);padding:.4em 1em;border-radius:3px;font-weight:600;text-decoration:none;">Go to CalNotaryClass.com →</a>
+  </div>
 </div>
 
 </div>
