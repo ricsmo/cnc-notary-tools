@@ -1,12 +1,23 @@
-# Restrict iframe embedding to calnotaryclass.com only
-# Direct visits to tools.calnotaryclass.com still work fine
-/*.html
+# Match the actual URLs CF Pages serves (strips .html extensions)
+# Override CF's default X-Frame-Options: SAMEORIGIN which blocks our WP embeds
+/exams
   Content-Security-Policy: frame-ancestors https://calnotaryclass.com https://www.calnotaryclass.com;
-  X-Content-Type-Options: nosniff
-  X-Frame-Options: ALLOW-FROM https://calnotaryclass.com
+  X-Frame-Options: ALLOWALL
 
-# API endpoints — same-origin from tools iframe, plus allow WP server-side fetch
+/search
+  Content-Security-Policy: frame-ancestors https://calnotaryclass.com https://www.calnotaryclass.com;
+  X-Frame-Options: ALLOWALL
+
+/commission
+  Content-Security-Policy: frame-ancestors https://calnotaryclass.com https://www.calnotaryclass.com;
+  X-Frame-Options: ALLOWALL
+
+/county-widget
+  Content-Security-Policy: frame-ancestors https://calnotaryclass.com https://www.calnotaryclass.com;
+  X-Frame-Options: ALLOWALL
+
+# API endpoints — restrict CORS to our domains
 /api/*
-  Access-Control-Allow-Origin: https://calnotaryclass.com https://tools.calnotaryclass.com
+  Access-Control-Allow-Origin: https://calnotaryclass.com
   Access-Control-Allow-Methods: GET
   Access-Control-Allow-Headers: Content-Type
