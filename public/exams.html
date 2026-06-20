@@ -6,23 +6,35 @@
 <title>California Notary Exam Schedule & Locations | CalNotaryClass</title>
 <link rel="stylesheet" href="/assets/style.css">
 <style>
-.exam-session { background:#fff; border:1px solid var(--border); border-radius:8px; padding:14px; }
+.exam-session { background:#fff; border:1px solid var(--border); border-radius:3px; padding:14px; }
 .exam-session .name { font-weight:600; font-size:15px; margin-bottom:4px; }
 .exam-session .meta { font-size:13px; color:var(--text-muted); margin-top:2px; }
-.distance-badge { display:inline-block; background:ecfdf3; color:var(--accent); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600; margin-left:8px; }
+.distance-badge { display:inline-block; background:#ecfdf3; color:var(--accent); padding:2px 8px; border-radius:3px; font-size:12px; font-weight:600; margin-left:8px; }
+
+/* View toggle */
+.view-toggle { display:flex; gap:8px; margin:16px 0; }
 
 /* Calendar grid */
 .cal-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.cal-nav button { background:none; border:1px solid var(--border); border-radius:6px; padding:6px 14px; font-size:14px; color:var(--text); cursor:pointer; }
-.cal-nav button:hover { background:var(--bg); }
+.cal-nav button { background:none; border:1px solid var(--border); border-radius:3px; padding:6px 14px; font-size:14px; color:var(--text); cursor:pointer; }
+.cal-nav button:hover { background:var(--palette7); }
 .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
 .cal-dow { text-align:center; font-size:12px; font-weight:600; color:var(--text-muted); padding:4px; }
-.cal-day { min-height:70px; background:#fff; border:1px solid var(--border); border-radius:4px; padding:4px; font-size:12px; position:relative; }
-.cal-day.empty { background:var(--bg); }
-.cal-day.today { border-color:var(--blue); border-width:2px; }
-.cal-day .day-num { font-weight:600; }
-.cal-event { display:block; background:ecfdf3; color:var(--accent); padding:1px 4px; border-radius:3px; font-size:10px; margin-top:2px; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.cal-event.near { background:#ecfdf3; color:var(--green); }
+.cal-day { min-height:80px; background:#fff; border:1px solid var(--border); border-radius:3px; padding:6px; font-size:13px; position:relative; cursor:default; transition:background 0.15s; }
+.cal-day.empty { background:var(--palette7); cursor:default; }
+.cal-day.today { border-color:var(--accent); border-width:2px; }
+.cal-day.has-exams { cursor:pointer; }
+.cal-day.has-exams:hover { background:var(--palette8); border-color:var(--accent); }
+.cal-day .day-num { font-weight:600; color:var(--palette3); }
+.cal-day .loc-count { display:inline-block; background:#ecfdf3; color:var(--green); padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; margin-top:4px; }
+.cal-day .loc-count.near { background:#ecfdf3; color:var(--accent); }
+
+/* Daily view */
+.daily-view { display:none; margin-top:20px; }
+.daily-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.daily-header h2 { margin:0; }
+.daily-back { background:none; color:var(--accent); border:none; cursor:pointer; font-size:14px; padding:6px 12px; }
+.daily-back:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -35,15 +47,15 @@
 <div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
   <input type="text" id="zip-input" placeholder="Enter your zip code..." style="max-width:160px;" inputmode="numeric" maxlength="5">
   <button id="search-btn">Find Exams Near Me</button>
-  <button id="location-btn" style="background:var(--text-muted);">Use My Location</button>
-  <button id="clear-btn" style="background:none;color:var(--blue);border:1px solid var(--blue);">Show All</button>
+  <button id="location-btn" style="background:var(--palette6);">Use My Location</button>
+  <button id="clear-btn" style="background:none;color:var(--accent);border:1px solid var(--accent);">Show All</button>
   <span id="location-status" class="muted" style="font-size:13px;"></span>
 </div>
 
 <!-- View toggle -->
-<div style="display:flex;gap:8px;margin:16px 0;">
-  <button id="view-list" style="background:var(--blue);">📋 List View</button>
-  <button id="view-cal" style="background:none;color:var(--text);border:1px solid var(--border);">📅 Calendar View</button>
+<div class="view-toggle">
+  <button id="view-list" style="background:var(--accent);color:#fff;">List View</button>
+  <button id="view-cal" style="background:none;color:var(--text);border:1px solid var(--border);">Calendar View</button>
 </div>
 
 <!-- List view -->
@@ -53,15 +65,26 @@
 
 <!-- Calendar view -->
 <div id="cal-view" style="display:none;">
-  <div class="cal-nav">
-    <button id="cal-prev">← Previous</button>
-    <strong id="cal-month-label"></strong>
-    <button id="cal-next">Next →</button>
+  <div id="cal-main">
+    <div class="cal-nav">
+      <button id="cal-prev">← Previous</button>
+      <strong id="cal-month-label"></strong>
+      <button id="cal-next">Next →</button>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+    </div>
+    <div class="cal-grid" id="cal-grid" style="margin-top:2px;"></div>
   </div>
-  <div class="cal-grid" id="cal-dow-row">
-    <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+
+  <!-- Daily view (replaces calendar when a day is clicked) -->
+  <div id="daily-view" class="daily-view">
+    <div class="daily-header">
+      <h2 id="daily-date-label"></h2>
+      <button class="daily-back" id="daily-back">← Back to Calendar</button>
+    </div>
+    <div id="daily-sessions"></div>
   </div>
-  <div class="cal-grid" id="cal-grid" style="margin-top:2px;"></div>
 </div>
 
 <div class="disclaimer">
@@ -95,7 +118,29 @@ async function loadExams() {
   renderCalendar();
 }
 
-// ─── Render list ─────────────────────────
+// ─── Format date helpers ─────────────────
+function formatDate(iso) {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+// ─── Render session card ─────────────────
+function renderSession(s, compact) {
+  const distHtml = (userLocation && s.distance_miles != null) ? `<span class="distance-badge">${Math.round(s.distance_miles)} mi</span>` : '';
+  return `
+    <div class="exam-session">
+      <div class="name">${s.venue}${distHtml}</div>
+      <div class="meta">${s.address ? s.address + ', ' : ''}${s.city}, CA${s.county_name ? ' — ' + s.county_name + ' County' : ''}</div>
+      <div class="meta"><strong>Times:</strong> ${s.times}</div>
+      <div class="meta" style="margin-top:6px;">
+        <span class="badge badge-green">Open</span>
+        ${s.walk_in ? '<span class="badge badge-orange">Walk-in OK</span>' : ''}
+        <a href="${s.registration_url}" target="_blank" rel="noopener" style="margin-left:8px;color:var(--accent);font-size:14px;">Register →</a>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Render list view ────────────────────
 function renderList() {
   const el = document.getElementById('schedule');
   if (!currentExams.length) {
@@ -103,8 +148,8 @@ function renderList() {
     return;
   }
 
-  // Group by venue when in distance mode
   if (userLocation) {
+    // Group by venue
     const byVenue = {};
     currentExams.forEach(e => {
       if (!byVenue[e.venue]) byVenue[e.venue] = { venue: e.venue, address: e.address, city: e.city, county_name: e.county_name, distance: e.distance_miles, dates: [] };
@@ -113,58 +158,41 @@ function renderList() {
 
     const venues = Object.values(byVenue).sort((a,b) => (a.distance||9999) - (b.distance||9999));
     el.innerHTML = venues.map(v => `
-      <div style="margin-bottom:20px;">
-        <h2 style="font-size:16px;color:var(--text);padding-bottom:4px;border-bottom:2px solid var(--border);">
+      <div style="margin-bottom:24px;">
+        <h2 style="font-size:16px;color:var(--palette3);padding-bottom:4px;border-bottom:2px solid var(--border);">
           ${v.venue}
-          ${v.distance != null ? `<span class="distance-badge">${v.distance} miles away</span>` : ''}
+          ${v.distance != null ? `<span class="distance-badge">${Math.round(v.distance)} miles away</span>` : ''}
         </h2>
-        <div style="display:grid;gap:8px;margin-top:8px;">
+        <div style="display:grid;gap:8px;margin-top:12px;">
           ${v.dates.map(d => renderSession(d, true)).join('')}
         </div>
       </div>
     `).join('');
-    return;
-  }
+  } else {
+    // Group by date
+    const byDate = {};
+    currentExams.forEach(e => {
+      if (!byDate[e.date]) byDate[e.date] = [];
+      byDate[e.date].push(e);
+    });
 
-  // Group by date when no geo
-  const byDate = {};
-  currentExams.forEach(e => {
-    if (!byDate[e.date]) byDate[e.date] = [];
-    byDate[e.date].push(e);
-  });
-
-  el.innerHTML = Object.entries(byDate).map(([date, sessions]) => {
-    const d = new Date(date + 'T00:00:00');
-    const dateStr = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-    return `
+    el.innerHTML = Object.entries(byDate).map(([date, sessions]) => `
       <div style="margin-bottom:24px;">
-        <h2 style="font-size:18px;color:var(--palette3);padding-bottom:4px;border-bottom:2px solid #e0e4ec;">${dateStr}</h2>
-        <div style="display:grid;gap:12px;margin-top:12px;">
+        <h2 style="font-size:18px;color:var(--palette3);padding-bottom:4px;border-bottom:2px solid var(--border);">${formatDate(date)}</h2>
+        <p class="muted" style="margin:8px 0;">${sessions.length} exam location${sessions.length !== 1 ? 's' : ''}</p>
+        <div style="display:grid;gap:12px;margin-top:8px;">
           ${sessions.map(s => renderSession(s, false)).join('')}
         </div>
       </div>
-    `;
-  }).join('');
+    `).join('');
+  }
 }
 
-function renderSession(s, compact) {
-  const distHtml = (userLocation && s.distance_miles != null) ? `<span class="distance-badge">${s.distance_miles} mi</span>` : '';
-  return `
-    <div class="exam-session">
-      <div class="name">${s.city}${compact ? '' : ' — ' + s.venue}</div>
-      ${compact ? `<div class="meta">${s.address}</div>` : `<div class="meta">${s.address ? s.address + ', ' : ''}${s.city}, CA</div>`}
-      ${compact ? `<div class="meta">${new Date(s.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${s.times}</div>` : `<div class="meta"><strong>Times:</strong> ${s.times}</div>`}
-      <div class="meta" style="margin-top:4px;">
-        <span class="badge badge-green">Open</span>
-        ${s.walk_in ? '<span class="badge badge-orange">Walk-in OK</span>' : ''}
-        <a href="${s.registration_url}" style="margin-left:8px;color:var(--accent);font-size:14px;">Register →</a>
-      </div>
-    </div>
-  `;
-}
-
-// ─── Render calendar ────────────────────
+// ─── Render calendar ─────────────────────
 function renderCalendar() {
+  document.getElementById('cal-main').style.display = '';
+  document.getElementById('daily-view').style.display = 'none';
+
   const year = calMonth.getFullYear();
   const month = calMonth.getMonth();
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -187,23 +215,60 @@ function renderCalendar() {
   });
 
   let html = '';
-  // Empty cells before first day
   for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
-  // Days
+
   for (let d = 1; d <= daysInMonth; d++) {
     const cellDate = new Date(year, month, d);
     const isToday = cellDate.getTime() === today.getTime();
     const exams = examByDate[d] || [];
-    const eventsHtml = exams.slice(0, 3).map(e => {
-      const nearClass = (userLocation && e.distance_miles != null && e.distance_miles < 50) ? ' near' : '';
-      return `<span class="cal-event${nearClass}" title="${e.venue}, ${e.city}">${e.city}</span>`;
-    }).join('');
-    const moreHtml = exams.length > 3 ? `<span class="cal-event" style="color:var(--palette6);">+${exams.length - 3} more</span>` : '';
-    html += `<div class="cal-day${isToday ? ' today' : ''}"><div class="day-num">${d}</div>${eventsHtml}${moreHtml}</div>`;
+
+    if (exams.length > 0) {
+      // Count unique locations and check if any are near
+      const venues = new Set(exams.map(e => e.venue));
+      const hasNear = userLocation && exams.some(e => e.distance_miles != null && e.distance_miles < 60);
+      const countClass = hasNear ? ' near' : '';
+
+      html += `<div class="cal-day has-exams${isToday ? ' today' : ''}" onclick="showDay(${year},${month},${d})">
+        <div class="day-num">${d}</div>
+        <span class="loc-count${countClass}">${venues.size} location${venues.size !== 1 ? 's' : ''}</span>
+      </div>`;
+    } else {
+      html += `<div class="cal-day${isToday ? ' today' : ''}"><div class="day-num">${d}</div></div>`;
+    }
   }
 
   document.getElementById('cal-grid').innerHTML = html;
 }
+
+// ─── Show daily view ─────────────────────
+function showDay(year, month, day) {
+  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const sessions = currentExams.filter(e => e.date === dateStr);
+
+  if (!sessions.length) return;
+
+  document.getElementById('cal-main').style.display = 'none';
+  document.getElementById('daily-view').style.display = '';
+  document.getElementById('daily-date-label').textContent = formatDate(dateStr);
+
+  // Sort by distance if geo, otherwise by city name
+  let sorted = [...sessions];
+  if (userLocation) {
+    sorted.sort((a, b) => (a.distance_miles || 9999) - (b.distance_miles || 9999));
+  } else {
+    sorted.sort((a, b) => a.city.localeCompare(b.city));
+  }
+
+  document.getElementById('daily-sessions').innerHTML = `
+    <p class="muted" style="margin-bottom:16px;">${sessions.length} exam location${sessions.length !== 1 ? 's' : ''} on this date${userLocation ? ' — sorted by distance' : ''}</p>
+    <div style="display:grid;gap:12px;">
+      ${sorted.map(s => renderSession(s, false)).join('')}
+    </div>
+  `;
+}
+
+// Make showDay available globally for onclick
+window.showDay = showDay;
 
 // ─── Event handlers ──────────────────────
 document.getElementById('search-btn').addEventListener('click', function() {
@@ -230,7 +295,10 @@ document.getElementById('location-btn').addEventListener('click', function() {
       loadExams();
     },
     err => {
-      document.getElementById('location-status').textContent = 'Location access denied. Try zip code instead.';
+      const msg = err.code === err.PERMISSION_DENIED
+        ? 'Location access denied. Click the lock icon in your address bar to allow location, or use your zip code instead.'
+        : 'Unable to get your location. Try your zip code instead.';
+      document.getElementById('location-status').textContent = msg;
     }
   );
 });
@@ -244,7 +312,7 @@ document.getElementById('clear-btn').addEventListener('click', function() {
 document.getElementById('view-list').addEventListener('click', function() {
   document.getElementById('list-view').style.display = '';
   document.getElementById('cal-view').style.display = 'none';
-  this.style.background = 'var(--blue)';
+  this.style.background = 'var(--accent)';
   this.style.color = '#fff';
   document.getElementById('view-cal').style.background = 'none';
   document.getElementById('view-cal').style.color = 'var(--text)';
@@ -254,11 +322,12 @@ document.getElementById('view-list').addEventListener('click', function() {
 document.getElementById('view-cal').addEventListener('click', function() {
   document.getElementById('list-view').style.display = 'none';
   document.getElementById('cal-view').style.display = '';
-  this.style.background = 'var(--blue)';
+  this.style.background = 'var(--accent)';
   this.style.color = '#fff';
   document.getElementById('view-list').style.background = 'none';
   document.getElementById('view-list').style.color = 'var(--text)';
   document.getElementById('view-list').style.border = '1px solid var(--border)';
+  renderCalendar();
 });
 
 document.getElementById('cal-prev').addEventListener('click', function() {
@@ -270,6 +339,8 @@ document.getElementById('cal-next').addEventListener('click', function() {
   calMonth.setMonth(calMonth.getMonth() + 1);
   renderCalendar();
 });
+
+document.getElementById('daily-back').addEventListener('click', renderCalendar);
 
 loadExams();
 </script>
