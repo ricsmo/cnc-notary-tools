@@ -1,33 +1,44 @@
 // auto-resize.js — Reports iframe content height to parent window
-// Allows embedded iframes to auto-resize instead of scrolling
+// Sends both growth AND shrinkage so the iframe always fits content
 (function() {
+  var lastHeight = 0;
+  var pending = false;
+
+  function measureHeight() {
+    // Use offsetHeight — reliably reflects visible content (display:none excluded)
+    return Math.max(
+      document.body.offsetHeight,
+      document.body.scrollHeight,
+      document.documentElement.offsetHeight
+    );
+  }
+
   function reportHeight() {
-    var h = document.documentElement.scrollHeight;
-    if (h > 0) {
-      window.parent.postMessage({ type: 'iframe-resize', height: h, src: window.location.pathname }, '*');
-    }
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function() {
+      pending = false;
+      var h = measureHeight();
+      // Always send, even if smaller — that's how we shrink
+      if (h > 0 && h !== lastHeight) {
+        lastHeight = h;
+        window.parent.postMessage({ type: 'iframe-resize', height: h, src: window.location.pathname }, '*');
+      }
+    });
   }
 
-  // Report on load
   window.addEventListener('load', reportHeight);
+  window.addEventListener('resize', reportHeight);
 
-  // Report when DOM changes (search results, commission data, etc.)
   if (typeof MutationObserver !== 'undefined') {
-    var observer = new MutationObserver(function() { reportHeight(); });
-    observer.observe(document.body, { childList: true, subtree: true, attributes: false, characterData: false });
-    // Throttle — MutationObserver fires rapidly during result rendering
     var timer;
-    var origReport = reportHeight;
-    reportHeight = function() {
+    var observer = new MutationObserver(function() {
       clearTimeout(timer);
-      timer = setTimeout(origReport, 50);
-    };
-    // Re-observe with throttled version
-    observer.disconnect();
-    observer = new MutationObserver(function() { reportHeight(); });
-    observer.observe(document.body, { childList: true, subtree: true });
+      timer = setTimeout(reportHeight, 50);
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
   }
 
-  // Fallback interval for edge cases
+  // Fallback — check every 500ms in case mutations are missed
   setInterval(reportHeight, 500);
 })();
