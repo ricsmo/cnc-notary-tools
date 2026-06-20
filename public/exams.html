@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>California Notary Exam Schedule — Dates & Locations Near You</title>
+<title>California Notary Exam Schedule & Locations | CalNotaryClass</title>
 <link rel="stylesheet" href="/assets/style.css">
 <style>
 .exam-session { background:#fff; border:1px solid var(--border); border-radius:8px; padding:14px; }
 .exam-session .name { font-weight:600; font-size:15px; margin-bottom:4px; }
 .exam-session .meta { font-size:13px; color:var(--text-muted); margin-top:2px; }
-.distance-badge { display:inline-block; background:#e8f0fe; color:#1a4ed8; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600; margin-left:8px; }
+.distance-badge { display:inline-block; background:ecfdf3; color:var(--accent); padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600; margin-left:8px; }
 
 /* Calendar grid */
 .cal-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
@@ -21,7 +21,7 @@
 .cal-day.empty { background:var(--bg); }
 .cal-day.today { border-color:var(--blue); border-width:2px; }
 .cal-day .day-num { font-weight:600; }
-.cal-event { display:block; background:#e8f0fe; color:#1a4ed8; padding:1px 4px; border-radius:3px; font-size:10px; margin-top:2px; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.cal-event { display:block; background:ecfdf3; color:var(--accent); padding:1px 4px; border-radius:3px; font-size:10px; margin-top:2px; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .cal-event.near { background:#ecfdf3; color:var(--green); }
 </style>
 </head>
@@ -138,7 +138,7 @@ function renderList() {
     const dateStr = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     return `
       <div style="margin-bottom:24px;">
-        <h2 style="font-size:18px;color:#1a1a2e;padding-bottom:4px;border-bottom:2px solid #e0e4ec;">${dateStr}</h2>
+        <h2 style="font-size:18px;color:var(--palette3);padding-bottom:4px;border-bottom:2px solid #e0e4ec;">${dateStr}</h2>
         <div style="display:grid;gap:12px;margin-top:12px;">
           ${sessions.map(s => renderSession(s, false)).join('')}
         </div>
@@ -157,7 +157,7 @@ function renderSession(s, compact) {
       <div class="meta" style="margin-top:4px;">
         <span class="badge badge-green">Open</span>
         ${s.walk_in ? '<span class="badge badge-orange">Walk-in OK</span>' : ''}
-        <a href="${s.registration_url}" style="margin-left:8px;color:#1a4ed8;font-size:14px;">Register →</a>
+        <a href="${s.registration_url}" style="margin-left:8px;color:var(--accent);font-size:14px;">Register →</a>
       </div>
     </div>
   `;
@@ -198,7 +198,7 @@ function renderCalendar() {
       const nearClass = (userLocation && e.distance_miles != null && e.distance_miles < 50) ? ' near' : '';
       return `<span class="cal-event${nearClass}" title="${e.venue}, ${e.city}">${e.city}</span>`;
     }).join('');
-    const moreHtml = exams.length > 3 ? `<span class="cal-event" style="color:#667085;">+${exams.length - 3} more</span>` : '';
+    const moreHtml = exams.length > 3 ? `<span class="cal-event" style="color:var(--palette6);">+${exams.length - 3} more</span>` : '';
     html += `<div class="cal-day${isToday ? ' today' : ''}"><div class="day-num">${d}</div>${eventsHtml}${moreHtml}</div>`;
   }
 
@@ -273,5 +273,6 @@ document.getElementById('cal-next').addEventListener('click', function() {
 
 loadExams();
 </script>
+<script src="/assets/auto-resize.js"></script>
 </body>
 </html>

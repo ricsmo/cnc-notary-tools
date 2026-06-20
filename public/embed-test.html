@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CNC Embed Tests — Simulating WordPress</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: #f7f8fa;
+    color: #1a1a2e;
+    line-height: 1.6;
+  }
+  h1 { font-size: 28px; margin-bottom: 8px; }
+  h2 { font-size: 22px; margin-top: 40px; margin-bottom: 12px; border-bottom: 2px solid #067847; padding-bottom: 6px; }
+  .description { color: #667085; font-size: 14px; margin-bottom: 20px; }
+  .iframe-wrap {
+    background: #fff;
+    border: 1px solid #e0e4ec;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+  iframe { width: 100%; border: 0; display: block; }
+  .badge { display: inline-block; background: #ecfdf3; color: #067847; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+  .note { font-size: 13px; color: #98a2b3; margin-top: 8px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>Embed Tests</h1>
+<p class="description">Simulating how these tools will look when embedded in calnotaryclass.com WordPress pages via iframe. Auto-resizing — no scrollbars.</p>
+
+<!-- ─── Commission Checker ─── -->
+<h2>Commission Checker <span class="badge">Auto-resize iframe</span></h2>
+<p class="description">Embedded on <code>calnotaryclass.com/tools/commission-checker/</code></p>
+<div class="iframe-wrap">
+  <iframe id="iframe-commission" src="http://localhost:8788/commission" height="200" scrolling="no" title="Commission Checker"></iframe>
+</div>
+<p class="note">Try: 2450094 (12 mo left, San Diego) or 2405951 (expired, SLO)</p>
+
+<!-- ─── Notary Verification ─── -->
+<h2>Notary Commission Verification <span class="badge">Auto-resize iframe</span></h2>
+<p class="description">Embedded on <code>calnotaryclass.com/tools/verify-commission/</code></p>
+<div class="iframe-wrap">
+  <iframe id="iframe-search" src="http://localhost:8788/search" height="200" scrolling="no" title="Verify a Notary Commission"></iframe>
+</div>
+<p class="note">Try: search "smith" or "garcia"</p>
+
+<!-- ─── County Stats Fragment ─── -->
+<h2>County Stats (HTML Fragment) <span class="badge">Indexable by Google</span></h2>
+<p class="description">Embedded inline on county landing pages. Content lands in the DOM for SEO. Example: <code>calnotaryclass.com/san-diego-county-notary-class/</code></p>
+<div class="iframe-wrap" style="padding: 0;">
+  <div id="county-html" style="padding: 20px;">Loading...</div>
+</div>
+<p class="note">Fetched via PHP in WordPress — fully server-rendered, no iframe, no JS needed.</p>
+
+<!-- ─── Exam Schedule ─── -->
+<h2>Exam Schedule <span class="badge">Auto-resize iframe</span></h2>
+<p class="description">Embedded on <code>calnotaryclass.com/tools/exam-schedule/</code></p>
+<div class="iframe-wrap">
+  <iframe id="iframe-exams" src="http://localhost:8788/exams" height="200" scrolling="no" title="California Notary Exam Schedule"></iframe>
+</div>
+<p class="note">Try: enter a CA zip code like 92101 or use geolocation</p>
+
+<script>
+  // Listen for height messages from iframes and resize them
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'iframe-resize' && e.data.height) {
+      // Match the iframe by its src path
+      var iframes = document.querySelectorAll('iframe');
+      iframes.forEach(function(iframe) {
+        var srcPath = iframe.getAttribute('src') || '';
+        if (srcPath.indexOf(e.data.src) !== -1 || e.data.src.indexOf(new URL(srcPath).pathname) !== -1) {
+          iframe.style.height = e.data.height + 'px';
+        }
+      });
+    }
+  });
+
+  // Also match by src string as fallback
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'iframe-resize' && e.data.height) {
+      var iframes = document.querySelectorAll('iframe');
+      iframes.forEach(function(iframe) {
+        try {
+          var iframePath = new URL(iframe.src).pathname;
+          if (iframePath === e.data.src) {
+            iframe.style.height = e.data.height + 'px';
+          }
+        } catch(err) {}
+      });
+    }
+  });
+
+  // Fetch county fragment and inject into DOM (simulates server-side fetch)
+  fetch('http://localhost:8788/api/fragment/county/san-diego')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('county-html').innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('county-html').innerHTML = '<p style="color:#b42318;">Failed to load. Is the local dev server running on port 8788?</p>';
+    });
+</script>
+
+</body>
+</html>
