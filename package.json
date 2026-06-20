@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler pages dev public",
+    "build": "echo no build step",
     "dev:node": "node server.mjs",
     "deploy:pages": "wrangler pages deploy public",
     "deploy:cron": "cd worker-cron && npx wrangler deploy",
