@@ -154,8 +154,9 @@ async function extractTextFromZip(zipBlob) {
 
   // Find first local file header
   let offset = 0;
-  const PK = 0x504b0304;
-  if (view.getUint32(offset, true) !== PK) {
+  // PK\x03\x04 in little-endian = 0x04034b50
+  const PK_SIG = 0x04034b50;
+  if (view.getUint32(offset, true) !== PK_SIG) {
     throw new Error('Not a valid ZIP file');
   }
 

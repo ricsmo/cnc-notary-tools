@@ -1,14 +1,14 @@
-// worker-cron/wrangler.toml — Cron Worker config
-// Deploys separately from Pages, shares the same D1 database
+# worker-cron/wrangler.toml — Cron Worker config
+# Deploys separately from Pages, shares the same D1 database
 
 name = "cnc-notary-cron"
 main = "index.js"
 compatibility_date = "2024-12-01"
 
-# Cron triggers — runs daily at 2 AM Arizona time (9 AM UTC)
+# Cron triggers — runs nightly at 2 AM Arizona time (9 AM UTC)
 # SOS publishes updates at 6 AM PT, so this grabs yesterday's snapshot — still daily-fresh
 [[triggers.crons]]
-cron = "0 9 * * 1-5"   # Weekdays 09:00 UTC = 2 AM Arizona (UTC-7 year round)
+cron = "0 9 * * 1-5"
 
 # Same D1 database as the Pages app
 [[d1_databases]]
