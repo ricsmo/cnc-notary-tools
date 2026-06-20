@@ -198,7 +198,7 @@ export async function onRequestGet(context) {
       urgency: 'critical',
       course: '6-Hour Course (Required)',
       text: `This commission expired ${Math.abs(monthsLeft)} months ago. A new 6-hour course and state exam are required to obtain a fresh commission.`,
-      cta: { text: 'Start the 6-Hour Course', url: 'https://calnotaryclass.com' },
+      cta: { text: 'Start the 6-Hour Course', url: 'https://calnotaryclass.com/checkout/?add-to-cart=1881' },
       paths: null
     };
   } else if (monthsLeft < 0) {
@@ -209,7 +209,7 @@ export async function onRequestGet(context) {
       urgency: 'critical',
       course: '3-Hour Refresher (if eligible)',
       text: `This commission expired ${Math.abs(monthsLeft)} month(s) ago. If within the one-year grace period, you may still qualify for the 3-hour refresher. Act quickly to complete the course and pass the exam.`,
-      cta: { text: 'Start 3-Hour Refresher', url: 'https://calnotaryclass.com' },
+      cta: { text: 'Start 3-Hour Refresher', url: 'https://calnotaryclass.com/checkout/?add-to-cart=3329' },
       paths: threeHourViable ? {
         recommended: {
           label: '3-Hour Refresher',
@@ -234,7 +234,7 @@ export async function onRequestGet(context) {
       text: `Commission expires in ${monthsLeft} month(s) on ${formatDate(result.expiration)}.`,
       cta: {
         text: threeHourViable ? 'Start 3-Hour Refresher' : 'Start 6-Hour Course',
-        url: 'https://calnotaryclass.com'
+        url: threeHourViable ? 'https://calnotaryclass.com/checkout/?add-to-cart=3329' : 'https://calnotaryclass.com/checkout/?add-to-cart=1881'
       },
       paths: {
         recommended: {
