@@ -21,20 +21,18 @@
 .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
 .cal-dow { text-align:center; font-size:12px; font-weight:600; color:var(--text-muted); padding:4px; }
 .cal-day { min-height:80px; background:#fff; border:1px solid var(--border); border-radius:3px; padding:6px; font-size:13px; position:relative; cursor:default; transition:background 0.15s; }
-.cal-day.empty { background:var(--palette7); cursor:default; }
+.cal-day.empty { background:var(--palette7); }
 .cal-day.today { border-color:var(--accent); border-width:2px; }
 .cal-day.has-exams { cursor:pointer; }
 .cal-day.has-exams:hover { background:var(--palette8); border-color:var(--accent); }
 .cal-day .day-num { font-weight:600; color:var(--palette3); }
 .cal-day .loc-count { display:inline-block; background:#ecfdf3; color:var(--green); padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; margin-top:4px; }
-.cal-day .loc-count.near { background:#ecfdf3; color:var(--accent); }
+.cal-day .loc-count.near { color:var(--accent); }
 
-/* Daily view */
-.daily-view { display:none; margin-top:20px; }
-.daily-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-.daily-header h2 { margin:0; }
-.daily-back { background:none; color:var(--accent); border:none; cursor:pointer; font-size:14px; padding:6px 12px; }
-.daily-back:hover { text-decoration:underline; }
+/* Date filter banner */
+.date-filter-banner { display:flex; align-items:center; gap:12px; background:#ecfdf3; border:1px solid var(--green); border-radius:3px; padding:10px 16px; margin-bottom:16px; }
+.date-filter-banner .label { font-weight:600; color:var(--palette3); }
+.date-filter-banner .clear { background:none; color:var(--accent); border:none; cursor:pointer; font-size:14px; padding:4px 8px; text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -60,31 +58,24 @@
 
 <!-- List view -->
 <div id="list-view">
+  <div id="date-filter-banner" class="date-filter-banner" style="display:none;">
+    <span class="label" id="filter-label"></span>
+    <button class="clear" id="clear-date-filter">Show all dates</button>
+  </div>
   <div id="schedule"></div>
 </div>
 
 <!-- Calendar view -->
 <div id="cal-view" style="display:none;">
-  <div id="cal-main">
-    <div class="cal-nav">
-      <button id="cal-prev">← Previous</button>
-      <strong id="cal-month-label"></strong>
-      <button id="cal-next">Next →</button>
-    </div>
-    <div class="cal-grid">
-      <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
-    </div>
-    <div class="cal-grid" id="cal-grid" style="margin-top:2px;"></div>
+  <div class="cal-nav">
+    <button id="cal-prev">← Previous</button>
+    <strong id="cal-month-label"></strong>
+    <button id="cal-next">Next →</button>
   </div>
-
-  <!-- Daily view (replaces calendar when a day is clicked) -->
-  <div id="daily-view" class="daily-view">
-    <div class="daily-header">
-      <h2 id="daily-date-label"></h2>
-      <button class="daily-back" id="daily-back">← Back to Calendar</button>
-    </div>
-    <div id="daily-sessions"></div>
+  <div class="cal-grid">
+    <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div><div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
   </div>
+  <div class="cal-grid" id="cal-grid" style="margin-top:2px;"></div>
 </div>
 
 <div class="disclaimer">
@@ -98,6 +89,7 @@
 <script>
 let currentExams = [];
 let userLocation = null;
+let dateFilter = null; // ISO date string or null
 let calMonth = new Date();
 calMonth.setDate(1);
 
@@ -118,13 +110,13 @@ async function loadExams() {
   renderCalendar();
 }
 
-// ─── Format date helpers ─────────────────
+// ─── Format date ─────────────────────────
 function formatDate(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
 
 // ─── Render session card ─────────────────
-function renderSession(s, compact) {
+function renderSession(s) {
   const distHtml = (userLocation && s.distance_miles != null) ? `<span class="distance-badge">${Math.round(s.distance_miles)} mi</span>` : '';
   return `
     <div class="exam-session">
@@ -140,10 +132,30 @@ function renderSession(s, compact) {
   `;
 }
 
+// ─── Get filtered exams ──────────────────
+function getFilteredExams() {
+  if (dateFilter) return currentExams.filter(e => e.date === dateFilter);
+  return currentExams;
+}
+
 // ─── Render list view ────────────────────
 function renderList() {
   const el = document.getElementById('schedule');
-  if (!currentExams.length) {
+  const banner = document.getElementById('date-filter-banner');
+
+  // Show/hide filter banner
+  if (dateFilter) {
+    const filtered = getFilteredExams();
+    document.getElementById('filter-label').textContent =
+      `Showing ${filtered.length} exam location${filtered.length !== 1 ? 's' : ''} on ${formatDate(dateFilter)}`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  const exams = getFilteredExams();
+
+  if (!exams.length) {
     el.innerHTML = '<p class="muted">No upcoming exams found.</p>';
     return;
   }
@@ -151,7 +163,7 @@ function renderList() {
   if (userLocation) {
     // Group by venue
     const byVenue = {};
-    currentExams.forEach(e => {
+    exams.forEach(e => {
       if (!byVenue[e.venue]) byVenue[e.venue] = { venue: e.venue, address: e.address, city: e.city, county_name: e.county_name, distance: e.distance_miles, dates: [] };
       byVenue[e.venue].dates.push(e);
     });
@@ -164,14 +176,14 @@ function renderList() {
           ${v.distance != null ? `<span class="distance-badge">${Math.round(v.distance)} miles away</span>` : ''}
         </h2>
         <div style="display:grid;gap:8px;margin-top:12px;">
-          ${v.dates.map(d => renderSession(d, true)).join('')}
+          ${v.dates.map(d => renderSession(d)).join('')}
         </div>
       </div>
     `).join('');
   } else {
     // Group by date
     const byDate = {};
-    currentExams.forEach(e => {
+    exams.forEach(e => {
       if (!byDate[e.date]) byDate[e.date] = [];
       byDate[e.date].push(e);
     });
@@ -181,7 +193,7 @@ function renderList() {
         <h2 style="font-size:18px;color:var(--palette3);padding-bottom:4px;border-bottom:2px solid var(--border);">${formatDate(date)}</h2>
         <p class="muted" style="margin:8px 0;">${sessions.length} exam location${sessions.length !== 1 ? 's' : ''}</p>
         <div style="display:grid;gap:12px;margin-top:8px;">
-          ${sessions.map(s => renderSession(s, false)).join('')}
+          ${sessions.map(s => renderSession(s)).join('')}
         </div>
       </div>
     `).join('');
@@ -190,9 +202,6 @@ function renderList() {
 
 // ─── Render calendar ─────────────────────
 function renderCalendar() {
-  document.getElementById('cal-main').style.display = '';
-  document.getElementById('daily-view').style.display = 'none';
-
   const year = calMonth.getFullYear();
   const month = calMonth.getMonth();
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -223,12 +232,11 @@ function renderCalendar() {
     const exams = examByDate[d] || [];
 
     if (exams.length > 0) {
-      // Count unique locations and check if any are near
       const venues = new Set(exams.map(e => e.venue));
       const hasNear = userLocation && exams.some(e => e.distance_miles != null && e.distance_miles < 60);
       const countClass = hasNear ? ' near' : '';
 
-      html += `<div class="cal-day has-exams${isToday ? ' today' : ''}" onclick="showDay(${year},${month},${d})">
+      html += `<div class="cal-day has-exams${isToday ? ' today' : ''}" data-date="${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}">
         <div class="day-num">${d}</div>
         <span class="loc-count${countClass}">${venues.size} location${venues.size !== 1 ? 's' : ''}</span>
       </div>`;
@@ -237,38 +245,47 @@ function renderCalendar() {
     }
   }
 
-  document.getElementById('cal-grid').innerHTML = html;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = html;
+
+  // Attach click listeners to exam days
+  grid.querySelectorAll('.cal-day.has-exams').forEach(function(day) {
+    day.addEventListener('click', function() {
+      dateFilter = this.getAttribute('data-date');
+      switchView('list');
+    });
+  });
 }
 
-// ─── Show daily view ─────────────────────
-function showDay(year, month, day) {
-  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  const sessions = currentExams.filter(e => e.date === dateStr);
+// ─── Switch view ─────────────────────────
+function switchView(view) {
+  var listEl = document.getElementById('list-view');
+  var calEl = document.getElementById('cal-view');
+  var listBtn = document.getElementById('view-list');
+  var calBtn = document.getElementById('view-cal');
 
-  if (!sessions.length) return;
-
-  document.getElementById('cal-main').style.display = 'none';
-  document.getElementById('daily-view').style.display = '';
-  document.getElementById('daily-date-label').textContent = formatDate(dateStr);
-
-  // Sort by distance if geo, otherwise by city name
-  let sorted = [...sessions];
-  if (userLocation) {
-    sorted.sort((a, b) => (a.distance_miles || 9999) - (b.distance_miles || 9999));
+  if (view === 'list') {
+    listEl.style.display = '';
+    calEl.style.display = 'none';
+    listBtn.style.background = 'var(--accent)';
+    listBtn.style.color = '#fff';
+    listBtn.style.border = '1px solid var(--accent)';
+    calBtn.style.background = 'none';
+    calBtn.style.color = 'var(--text)';
+    calBtn.style.border = '1px solid var(--border)';
+    renderList();
   } else {
-    sorted.sort((a, b) => a.city.localeCompare(b.city));
+    listEl.style.display = 'none';
+    calEl.style.display = '';
+    calBtn.style.background = 'var(--accent)';
+    calBtn.style.color = '#fff';
+    calBtn.style.border = '1px solid var(--accent)';
+    listBtn.style.background = 'none';
+    listBtn.style.color = 'var(--text)';
+    listBtn.style.border = '1px solid var(--border)';
+    renderCalendar();
   }
-
-  document.getElementById('daily-sessions').innerHTML = `
-    <p class="muted" style="margin-bottom:16px;">${sessions.length} exam location${sessions.length !== 1 ? 's' : ''} on this date${userLocation ? ' — sorted by distance' : ''}</p>
-    <div style="display:grid;gap:12px;">
-      ${sorted.map(s => renderSession(s, false)).join('')}
-    </div>
-  `;
 }
-
-// Make showDay available globally for onclick
-window.showDay = showDay;
 
 // ─── Event handlers ──────────────────────
 document.getElementById('search-btn').addEventListener('click', function() {
@@ -310,24 +327,13 @@ document.getElementById('clear-btn').addEventListener('click', function() {
 });
 
 document.getElementById('view-list').addEventListener('click', function() {
-  document.getElementById('list-view').style.display = '';
-  document.getElementById('cal-view').style.display = 'none';
-  this.style.background = 'var(--accent)';
-  this.style.color = '#fff';
-  document.getElementById('view-cal').style.background = 'none';
-  document.getElementById('view-cal').style.color = 'var(--text)';
-  document.getElementById('view-cal').style.border = '1px solid var(--border)';
+  dateFilter = null;
+  switchView('list');
 });
 
 document.getElementById('view-cal').addEventListener('click', function() {
-  document.getElementById('list-view').style.display = 'none';
-  document.getElementById('cal-view').style.display = '';
-  this.style.background = 'var(--accent)';
-  this.style.color = '#fff';
-  document.getElementById('view-list').style.background = 'none';
-  document.getElementById('view-list').style.color = 'var(--text)';
-  document.getElementById('view-list').style.border = '1px solid var(--border)';
-  renderCalendar();
+  dateFilter = null;
+  switchView('cal');
 });
 
 document.getElementById('cal-prev').addEventListener('click', function() {
@@ -340,7 +346,10 @@ document.getElementById('cal-next').addEventListener('click', function() {
   renderCalendar();
 });
 
-document.getElementById('daily-back').addEventListener('click', renderCalendar);
+document.getElementById('clear-date-filter').addEventListener('click', function() {
+  dateFilter = null;
+  renderList();
+});
 
 loadExams();
 </script>
