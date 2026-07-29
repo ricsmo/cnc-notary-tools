@@ -1,0 +1,39 @@
+-- CNC Notary: exam schedule refresh (2026-07-29)
+-- Source: CPS HR "July - October 2026" PDF (updated 07/22/2026)
+-- Run against remote D1: wrangler d1 execute cnc-notary --remote --file=this.sql
+
+-- Replace exam schedule
+DELETE FROM exam_dates;
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-01', 'Redding', 45, 'Shasta Junior College', '11555 Old Oregon Trail', '10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-01', 'Ontario', 36, 'Embassy Suites by Hilton Ontario Airport', '3663 E. Guasti Road', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-08', 'Sacramento', 34, 'Sacramento City College', '3835 Freeport Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-08', 'Torrance', 19, 'El Camino College', '16007 Crenshaw Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-08', 'Poway', 37, 'Hampton Inn & Suites - San Diego/Poway', '14068 Stowe Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-15', 'Daly City', 41, 'Hampton by Hilton Daly City', '2700 Junipero Serra Blvd', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-15', 'Valencia', 19, 'College of the Canyons', '26455 Rockwell Canyon Rd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-22', 'Bakersfield', 15, 'Hilton Garden Inn Bakersfield', '3625 Marriott Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-29', 'Costa Mesa', 30, 'Orange Coast College', '2701 Fairview Rd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-08-29', 'San Jose', 43, 'Hyatt House San Jose Silicon Valley', '75 Headquarters Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-12', 'Sacramento', 34, 'Sacramento City College', '3835 Freeport Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-12', 'Torrance', 19, 'El Camino College', '16007 Crenshaw Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-12', 'Poway', 37, 'Hampton Inn & Suites - San Diego/Poway', '14068 Stowe Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-19', 'Daly City', 41, 'Hampton by Hilton Daly City', '2700 Junipero Serra Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-19', 'Valencia', 19, 'College of the Canyons', '26455 Rockwell Canyon Rd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-26', 'Costa Mesa', 30, 'Orange Coast College', '2701 Fairview Rd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-26', 'San Jose', 43, 'Hyatt House San Jose Silicon Valley', '75 Headquarters Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-09-27', 'Ontario', 36, 'Embassy Suites by Hilton Ontario Airport', '3663 E. Guasti Road', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-10', 'Torrance', 19, 'El Camino College', '16007 Crenshaw Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-10', 'Poway', 37, 'Hampton Inn & Suites - San Diego/Poway', '14068 Stowe Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-17', 'Sacramento', 34, 'Sacramento City College', '3835 Freeport Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-17', 'Valencia', 19, 'College of the Canyons', '26455 Rockwell Canyon Rd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-17', 'Daly City', 41, 'Hampton by Hilton Daly City', '2700 Junipero Serra Blvd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-17', 'Ontario', 36, 'Embassy Suites by Hilton Ontario Airport', '3663 E. Guasti Road', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-24', 'Costa Mesa', 30, 'Orange Coast College', '2701 Fairview Rd', '08:30 AM, 10:30 AM, 12:30 PM, 02:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+INSERT INTO exam_dates (date, city, county_code, venue, address, times, registration_url, status, walk_in) VALUES ('2026-10-24', 'San Jose', 43, 'Hyatt House San Jose Silicon Valley', '75 Headquarters Drive', '08:30 AM, 10:30 AM, 12:30 PM', 'https://notary.cpshr.us/', 'open', 1);
+
+-- Update freshness metadata
+INSERT OR REPLACE INTO meta (key, value) VALUES ('exam_last_updated', '2026-07-29');
+INSERT OR REPLACE INTO meta (key, value) VALUES ('exam_source', 'CPS HR July-October 2026 PDF (updated 07/22/2026)');
+
+-- Verify
+SELECT 'exam_dates rows:' AS info, COUNT(*) AS n FROM exam_dates;
