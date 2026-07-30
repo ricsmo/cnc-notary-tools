@@ -5,8 +5,18 @@ name = "cnc-notary-cron"
 main = "index.js"
 compatibility_date = "2024-12-01"
 
-# Cron triggers — runs nightly at 2 AM Arizona time (9 AM UTC)
-# SOS publishes updates at 6 AM PT, so this grabs yesterday's snapshot — still daily-fresh
+# The import processes ~136K notary records from a 5MB ZIP into D1 in ~90-row
+# batches. At the default CPU limit (30s) the worker is killed mid-import.
+# 5 minutes (300,000ms) is the Paid-plan maximum for scheduled Workers and is
+# comfortably enough — actual runtime is typically under 2 minutes.
+[limits]
+cpu_ms = 300_000
+
+# Cron triggers — runs nightly at 2 AM Arizona time (9 AM UTC) on weekdays.
+# SOS publishes updates at 6 AM PT, so this grabs yesterday's snapshot — still daily-fresh.
+# NOTE: the schedule must be registered on the deployed worker. If `schedules`
+# shows empty (CF API or dashboard), the trigger never fires. Re-run
+# `npx wrangler deploy` or register via the API if so.
 [[triggers.crons]]
 cron = "0 9 * * 1-5"
 
