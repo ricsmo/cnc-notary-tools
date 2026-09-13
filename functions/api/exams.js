@@ -2,7 +2,7 @@
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const { queryAll, queryOne, distance } = await import('../../lib/helpers.js');
+  const { queryAll, queryOne, distance, laToday } = await import('../../lib/helpers.js');
 
   const county = url.searchParams.get('county');
   const zip = url.searchParams.get('zip');
@@ -38,7 +38,7 @@ export async function onRequestGet(context) {
     const venues = await queryAll(env.DB, `
       SELECT DISTINCT venue, address, city, county_code, lat, lng
       FROM exam_dates
-      WHERE lat IS NOT NULL AND date >= date('now')
+      WHERE lat IS NOT NULL AND date >= date('${laToday()}')
     `);
 
     const sorted = venues
@@ -53,7 +53,7 @@ export async function onRequestGet(context) {
              c.name as county_name, c.slug as county_slug
       FROM exam_dates e
       LEFT JOIN counties c ON e.county_code = c.code
-      WHERE e.date >= date('now') AND e.venue IN (${placeholders})
+      WHERE e.date >= date('${laToday()}') AND e.venue IN (${placeholders})
       ORDER BY e.date
     `, nearestVenueNames);
 
@@ -81,7 +81,7 @@ export async function onRequestGet(context) {
            c.name as county_name, c.slug as county_slug
     FROM exam_dates e
     LEFT JOIN counties c ON e.county_code = c.code
-    WHERE e.date >= date('now')
+    WHERE e.date >= date('${laToday()}')
   `;
   const params = [];
 

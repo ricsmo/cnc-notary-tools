@@ -2,7 +2,7 @@
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const { queryOne, queryAll, distance } = await import('../../lib/helpers.js');
+  const { queryOne, queryAll, distance, laToday } = await import('../../lib/helpers.js');
 
   const number = (url.searchParams.get('number') || '').trim();
   const zip = (url.searchParams.get('zip') || '').trim();
@@ -54,7 +54,7 @@ export async function onRequestGet(context) {
       const venues = await queryAll(env.DB, `
         SELECT DISTINCT venue, address, city, county_code, lat, lng
         FROM exam_dates
-        WHERE lat IS NOT NULL AND date >= date('now') AND date <= ?
+        WHERE lat IS NOT NULL AND date >= date('${laToday()}') AND date <= ?
       `, [examDeadline]);
 
       if (venues.length > 0) {
@@ -70,7 +70,7 @@ export async function onRequestGet(context) {
                  e.county_code, c.name as county_name
           FROM exam_dates e
           JOIN counties c ON e.county_code = c.code
-          WHERE e.date >= date('now') AND e.date <= ? AND e.venue IN (${placeholders})
+          WHERE e.date >= date('${laToday()}') AND e.date <= ? AND e.venue IN (${placeholders})
           ORDER BY e.date
         `, [examDeadline, ...nearestVenueNames]);
 
@@ -97,7 +97,7 @@ export async function onRequestGet(context) {
              e.county_code, c.name as county_name
       FROM exam_dates e
       JOIN counties c ON e.county_code = c.code
-      WHERE e.county_code = ? AND e.date >= date('now') AND e.date <= ?
+      WHERE e.county_code = ? AND e.date >= date('${laToday()}') AND e.date <= ?
       ORDER BY e.date
       LIMIT 5
     `, [result.county_code, examDeadline]);
@@ -113,7 +113,7 @@ export async function onRequestGet(context) {
         const venues = await queryAll(env.DB, `
           SELECT DISTINCT venue, address, city, county_code, lat, lng
           FROM exam_dates
-          WHERE lat IS NOT NULL AND date >= date('now') AND date <= ?
+          WHERE lat IS NOT NULL AND date >= date('${laToday()}') AND date <= ?
         `, [examDeadline]);
 
         const sorted = venues
@@ -127,7 +127,7 @@ export async function onRequestGet(context) {
                  e.county_code, c.name as county_name
           FROM exam_dates e
           JOIN counties c ON e.county_code = c.code
-          WHERE e.date >= date('now') AND e.date <= ? AND e.venue IN (${placeholders})
+          WHERE e.date >= date('${laToday()}') AND e.date <= ? AND e.venue IN (${placeholders})
           ORDER BY e.date
         `, [examDeadline, ...nearestVenueNames]);
 
@@ -144,7 +144,7 @@ export async function onRequestGet(context) {
                  e.county_code, c.name as county_name
           FROM exam_dates e
           JOIN counties c ON e.county_code = c.code
-          WHERE e.date >= date('now') AND e.date <= ?
+          WHERE e.date >= date('${laToday()}') AND e.date <= ?
           ORDER BY e.date
           LIMIT 5
         `, [examDeadline]);

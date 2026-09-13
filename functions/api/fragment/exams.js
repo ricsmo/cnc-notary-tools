@@ -2,7 +2,7 @@
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const { queryAll, queryOne, html } = await import('../../../lib/helpers.js');
+  const { queryAll, queryOne, html, laToday } = await import('../../../lib/helpers.js');
 
   const countySlug = url.searchParams.get('county');
 
@@ -19,7 +19,7 @@ export async function onRequestGet(context) {
     exams = await queryAll(env.DB, `
       SELECT e.date, e.city, e.venue, e.address, e.times, e.registration_url, e.walk_in
       FROM exam_dates e
-      WHERE e.county_code = ? AND e.date >= date('now')
+      WHERE e.county_code = ? AND e.date >= date('${laToday()}')
       ORDER BY e.date
     `, [countyCode]);
   }
@@ -31,7 +31,7 @@ export async function onRequestGet(context) {
              c.name as county_name
       FROM exam_dates e
       LEFT JOIN counties c ON e.county_code = c.code
-      WHERE e.date >= date('now')
+      WHERE e.date >= date('${laToday()}')
       ORDER BY e.date
       LIMIT 8
     `);
