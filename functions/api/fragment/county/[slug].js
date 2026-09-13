@@ -17,6 +17,12 @@ export async function onRequestGet(context) {
     LIMIT 8
   `, [county.code]);
 
+  const expiring = await queryOne(env.DB, `
+    SELECT COUNT(*) as c FROM notaries
+    WHERE county_code = ?
+    AND date(expiration) <= date('now', '+12 months')
+  `, [county.code]);
+
   const citiesHtml = topCities
     .map(c => `<tr><td>${c.city}</td><td style="text-align:right">${c.count.toLocaleString()}</td></tr>`)
     .join('');
@@ -24,7 +30,8 @@ export async function onRequestGet(context) {
   const fragment = `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px 0;">
 <h3 style="margin:0 0 8px;font-size:18px;color:#1a1a2e;">Active Notaries in ${county.name} County</h3>
-<p style="font-size:28px;font-weight:700;color:#067847;margin:0 0 16px;">${count.c.toLocaleString()}</p>
+<p style="font-size:28px;font-weight:700;color:#067847;margin:0 0 4px;">${count.c.toLocaleString()}</p>
+<p style="font-size:14px;color:#475467;margin:0 0 16px;">${expiring.c.toLocaleString()} of those commissions come up for renewal in the next 12 months.</p>
 <table style="width:100%;border-collapse:collapse;font-size:14px;">
 <thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e4ec;color:#667085;">City</th>
 <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e0e4ec;color:#667085;">Notaries</th></tr></thead>

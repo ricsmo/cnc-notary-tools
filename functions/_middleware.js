@@ -48,6 +48,14 @@ function isPassthrough(pathname) {
   );
 }
 
+// Origins allowed to fetch /api/* cross-origin (browser JS embeds on the
+// county pages). Mirrors the _headers CORS intent, which silently does not
+// apply to Function responses.
+const ALLOWED_ORIGINS = new Set([
+  'https://calnotaryclass.com',
+  'https://www.calnotaryclass.com',
+]);
+
 export async function onRequest(context) {
   const { request, next } = context;
   const url = new URL(request.url);
@@ -63,7 +71,22 @@ export async function onRequest(context) {
 
   // Never gate the API or static assets — the embedded pages depend on them.
   if (isPassthrough(url.pathname)) {
-    return next();
+    const res = await next();
+    // CORS for the API: Pages' _headers file does not apply to Function
+    // responses, so /api/* ships without Access-Control-Allow-Origin unless
+    // added here. Without this, cross-origin fetches from county pages on
+    // calnotaryclass.com fail ("Failed to fetch"), even though the header
+    // rule in _headers suggests they should work.
+    if (url.pathname.startsWith('/api/') && request.method === 'GET') {
+      const origin = request.headers.get('origin');
+      if (origin && ALLOWED_ORIGINS.has(origin)) {
+        const cors = new Headers(res.headers);
+        cors.set('Access-Control-Allow-Origin', origin);
+        cors.set('Vary', 'Origin');
+        return new Response(res.body, { status: res.status, statusText: res.statusText, headers: cors });
+      }
+    }
+    return res;
   }
 
   // Only gate the known embeddable tool pages; everything else passes through.
