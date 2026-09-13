@@ -50,7 +50,7 @@ export async function onRequestGet(context) {
   }
 
   const headerText = county
-    ? `Upcoming Notary Exams — ${county.name} County`
+    ? `Upcoming Notary Exams in ${county.name} County`
     : 'Upcoming California Notary Exams';
 
   const byDate = {};
@@ -86,7 +86,7 @@ export async function onRequestGet(context) {
 <tbody>${rowsHtml}
 </tbody>
 </table>
-<p style="font-size:12px;color:#98a2b3;margin-top:12px;">Exam schedule provided by CPS HR Consulting. Registration required at <a href="https://cmas.cpshr.us/CMAS/" style="color:#1a4ed8;">cmas.cpshr.us</a>. Walk-in registration allowed space-available — arrive 45 minutes early.</p>
+<p style="font-size:12px;color:#98a2b3;margin-top:12px;">Exam schedule provided by CPS HR Consulting. Registration required at <a href="https://cmas.cpshr.us/CMAS/" style="color:#1a4ed8;">cmas.cpshr.us</a>. Walk-in registration allowed space-available. Arrive 45 minutes early.</p>
 </div>`.trim();
 
   return html(fragment);
